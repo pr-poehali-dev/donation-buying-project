@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
+import { useAuth } from "@/context/AuthContext";
 
 const achievements = [
   { icon: "🏆", name: "Первая покупка", desc: "Совершил первую транзакцию", unlocked: true },
@@ -10,11 +11,19 @@ const achievements = [
   { icon: "👑", name: "Легенда", desc: "Потратил 50 000 ₽", unlocked: false },
 ];
 
+const RANK_INFO: Record<string, { label: string; color: string; icon: string }> = {
+  owner:   { label: "Владелец", color: "text-yellow-400 border-yellow-500/30 bg-yellow-500/10", icon: "👑" },
+  admin:   { label: "Админ",    color: "text-purple-300 border-purple-500/30 bg-purple-500/10", icon: "🛡️" },
+  support: { label: "Поддержка",color: "text-blue-300 border-blue-500/30 bg-blue-500/10",      icon: "🎧" },
+  user:    { label: "Пользователь", color: "text-gray-400 border-white/10 bg-white/5",          icon: "👤" },
+};
+
 export default function ProfilePage() {
-  const [nickname, setNickname] = useState("GamerPro2026");
-  const [email, setEmail] = useState("user@example.com");
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  const rankInfo = RANK_INFO[user?.rank || "user"];
 
   const handleSave = () => {
     setIsEditing(false);
@@ -42,16 +51,16 @@ export default function ProfilePage() {
                   <span className="text-[10px] text-black font-bold">●</span>
                 </div>
               </div>
-              <h2 className="font-game text-xl text-white mb-1">{nickname}</h2>
-              <p className="text-gray-500 text-sm mb-4">{email}</p>
-              <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 rounded-full px-4 py-1.5">
-                <span className="text-purple-300 text-sm">⚡ VIP Уровень 3</span>
+              <h2 className="font-game text-xl text-white mb-1">{user?.username || "—"}</h2>
+              <p className="text-gray-500 text-sm mb-4">{user?.email || "—"}</p>
+              <div className={`inline-flex items-center gap-2 border rounded-full px-4 py-1.5 ${rankInfo.color}`}>
+                <span className="text-sm">{rankInfo.icon} {rankInfo.label}</span>
               </div>
             </div>
 
             <div className="card-glow-gold rounded-2xl p-5">
               <h3 className="font-game text-yellow-400 mb-4">💎 Мой баланс</h3>
-              <div className="text-4xl font-game gradient-text-gold mb-1">1 250</div>
+              <div className="text-4xl font-game gradient-text-gold mb-1">{user?.balance ?? 0}</div>
               <div className="text-gray-500 text-sm mb-4">донат-монет</div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="bg-white/5 rounded-xl p-3 text-center">
@@ -101,8 +110,8 @@ export default function ProfilePage() {
 
               <div className="space-y-4">
                 {[
-                  { label: "Никнейм", value: nickname, setter: setNickname, type: "text", icon: "User" },
-                  { label: "Email", value: email, setter: setEmail, type: "email", icon: "Mail" },
+                  { label: "Никнейм", value: user?.username || "", type: "text", icon: "User" },
+                  { label: "Email", value: user?.email || "", type: "email", icon: "Mail" },
                 ].map((field, i) => (
                   <div key={i}>
                     <label className="text-gray-500 text-sm mb-2 flex items-center gap-2">
@@ -111,8 +120,7 @@ export default function ProfilePage() {
                     </label>
                     <input
                       type={field.type}
-                      value={field.value}
-                      onChange={e => field.setter(e.target.value)}
+                      defaultValue={field.value}
                       disabled={!isEditing}
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white disabled:text-gray-500 focus:outline-none focus:border-purple-500/50 transition-all"
                     />

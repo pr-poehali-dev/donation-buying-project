@@ -5,18 +5,23 @@ import CatalogPage from "@/pages/CatalogPage";
 import HistoryPage from "@/pages/HistoryPage";
 import ProfilePage from "@/pages/ProfilePage";
 import SupportPage from "@/pages/SupportPage";
+import AuthPage from "@/pages/AuthPage";
+import AdminPage from "@/pages/AdminPage";
+import { AuthProvider } from "@/context/AuthContext";
 
-export default function Index() {
+function AppContent() {
   const [currentPage, setCurrentPage] = useState("home");
 
   const renderPage = () => {
     switch (currentPage) {
-      case "home": return <HomePage onNavigate={setCurrentPage} />;
+      case "home":    return <HomePage onNavigate={setCurrentPage} />;
       case "catalog": return <CatalogPage onNavigate={setCurrentPage} />;
       case "history": return <HistoryPage />;
       case "profile": return <ProfilePage />;
       case "support": return <SupportPage />;
-      default: return <HomePage onNavigate={setCurrentPage} />;
+      case "auth":    return <AuthPage onNavigate={setCurrentPage} />;
+      case "admin":   return <AdminPage />;
+      default:        return <HomePage onNavigate={setCurrentPage} />;
     }
   };
 
@@ -42,5 +47,13 @@ export default function Index() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function Index() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

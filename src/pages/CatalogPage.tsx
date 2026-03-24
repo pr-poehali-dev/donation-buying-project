@@ -1,36 +1,68 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Icon from "@/components/ui/icon";
+import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
-const packages = [
-  { id: 1, name: "Legend Basic", price: 19, popular: false, isNew: false, color: "from-slate-500 to-gray-600", emoji: "⚔️", desc: "Начальный статус легенды" },
-  { id: 2, name: "Legend Gold", price: 199, popular: false, isNew: false, color: "from-yellow-500 to-amber-400", emoji: "🥇", desc: "Золотой статус для избранных" },
-  { id: 3, name: "Legend Platinum", price: 499, popular: true, isNew: false, color: "from-cyan-400 to-blue-500", emoji: "💠", desc: "Платиновый уровень престижа" },
-  { id: 4, name: "Legend Diamond", price: 999, popular: false, isNew: false, color: "from-purple-500 to-pink-500", emoji: "💎", desc: "Редкий алмазный статус" },
-  { id: 5, name: "Временный Админ", price: 4999, popular: false, isNew: true, color: "from-red-500 to-orange-500", emoji: "👑", desc: "Права администратора на сервере" },
+interface Package {
+  id: number;
+  name: string;
+  price: number;
+  emoji: string;
+  color: string;
+  description: string;
+  popular: boolean;
+  is_new: boolean;
+}
+
+const FALLBACK: Package[] = [
+  { id: 1, name: "Legend Basic",    price: 19,   emoji: "⚔️", color: "from-slate-500 to-gray-600",    description: "Начальный статус легенды",          popular: false, is_new: false },
+  { id: 2, name: "Legend Gold",     price: 199,  emoji: "🥇", color: "from-yellow-500 to-amber-400",  description: "Золотой статус для избранных",      popular: false, is_new: false },
+  { id: 3, name: "Legend Platinum", price: 499,  emoji: "💠", color: "from-cyan-400 to-blue-500",     description: "Платиновый уровень престижа",       popular: true,  is_new: false },
+  { id: 4, name: "Legend Diamond",  price: 999,  emoji: "💎", color: "from-purple-500 to-pink-500",   description: "Редкий алмазный статус",            popular: false, is_new: false },
+  { id: 5, name: "Временный Админ", price: 4999, emoji: "👑", color: "from-red-500 to-orange-500",    description: "Права администратора на сервере",   popular: false, is_new: true  },
 ];
 
 interface CatalogPageProps {
   onNavigate: (page: string) => void;
 }
 
-export default function CatalogPage({ onNavigate: _onNavigate }: CatalogPageProps) {
+export default function CatalogPage({ onNavigate }: CatalogPageProps) {
+  const { user } = useAuth();
+  const [packages, setPackages] = useState<Package[]>(FALLBACK);
   const [promoCode, setPromoCode] = useState("");
+  const [discount, setDiscount] = useState(0);
   const [promoApplied, setPromoApplied] = useState(false);
-  const [promoError, setPromoError] = useState(false);
+  const [promoError, setPromoError] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
 
-  const applyPromo = () => {
-    if (promoCode.toUpperCase() === "WELCOME20" || promoCode.toUpperCase() === "SAVE10") {
+  useEffect(() => {
+    if (user) {
+      api.getPackages()
+        .then(d => setPackages(d.packages))
+        .catch(() => {});
+    }
+  }, [user]);
+
+  const applyPromo = async () => {
+    if (!user) { onNavigate("auth"); return; }
+    setPromoLoading(true);
+    setPromoError("");
+    try {
+      const data = await api.checkPromo(promoCode);
+      setDiscount(data.discount_percent);
       setPromoApplied(true);
-      setPromoError(false);
-    } else {
-      setPromoError(true);
+    } catch (e: unknown) {
+      setPromoError(e instanceof Error ? e.message : "Промокод не найден");
       setPromoApplied(false);
+      setDiscount(0);
+    } finally {
+      setPromoLoading(false);
     }
   };
 
   const getPrice = (price: number) => {
-    if (promoApplied) return Math.round(price * 0.8);
+    if (promoApplied && discount > 0) return Math.round(price * (1 - discount / 100));
     return price;
   };
 
@@ -51,14 +83,14 @@ export default function CatalogPage({ onNavigate: _onNavigate }: CatalogPageProp
               onClick={() => setSelectedPackage(pkg.id === selectedPackage ? null : pkg.id)}
               className={`relative card-glow rounded-2xl p-6 cursor-pointer transition-all ${
                 selectedPackage === pkg.id ? "border-purple-400/60 shadow-lg shadow-purple-500/20" : ""
-              } ${pkg.name === "Временный Админ" ? "md:col-span-2 lg:col-span-1" : ""}`}
+              }`}
             >
               {pkg.popular && (
                 <div className="absolute -top-2 left-4 badge-popular px-3 py-0.5 rounded-full text-xs font-bold">
                   🔥 ПОПУЛЯРНОЕ
                 </div>
               )}
-              {pkg.isNew && (
+              {pkg.is_new && (
                 <div className="absolute -top-2 left-4 badge-new px-3 py-0.5 rounded-full text-xs font-bold">
                   ✨ НОВИНКА
                 </div>
@@ -69,7 +101,7 @@ export default function CatalogPage({ onNavigate: _onNavigate }: CatalogPageProp
               </div>
 
               <h3 className="font-game text-white text-xl mb-1">{pkg.name}</h3>
-              <p className="text-gray-500 text-sm mb-4">{pkg.desc}</p>
+              <p className="text-gray-500 text-sm mb-4">{pkg.description}</p>
 
               <div className="flex items-center justify-between">
                 <div>
@@ -81,13 +113,9 @@ export default function CatalogPage({ onNavigate: _onNavigate }: CatalogPageProp
                   </span>
                 </div>
                 <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
-                  selectedPackage === pkg.id
-                    ? "border-purple-400 bg-purple-400"
-                    : "border-gray-600"
+                  selectedPackage === pkg.id ? "border-purple-400 bg-purple-400" : "border-gray-600"
                 }`}>
-                  {selectedPackage === pkg.id && (
-                    <Icon name="Check" size={14} className="text-white" />
-                  )}
+                  {selectedPackage === pkg.id && <Icon name="Check" size={14} className="text-white" />}
                 </div>
               </div>
             </div>
@@ -108,8 +136,13 @@ export default function CatalogPage({ onNavigate: _onNavigate }: CatalogPageProp
                   {getPrice(packages.find(p => p.id === selectedPackage)?.price || 0)} ₽
                 </p>
               </div>
-              <button className="w-full btn-gradient text-white font-game py-3 rounded-xl relative overflow-hidden">
-                <span className="relative z-10">⚡ Купить сейчас</span>
+              <button
+                onClick={() => !user && onNavigate("auth")}
+                className="w-full btn-gradient text-white font-game py-3 rounded-xl relative overflow-hidden"
+              >
+                <span className="relative z-10">
+                  {user ? "⚡ Купить сейчас" : "🔐 Войди для покупки"}
+                </span>
               </button>
             </div>
           </div>
@@ -121,27 +154,31 @@ export default function CatalogPage({ onNavigate: _onNavigate }: CatalogPageProp
             <input
               type="text"
               value={promoCode}
-              onChange={e => setPromoCode(e.target.value)}
+              onChange={e => { setPromoCode(e.target.value); setPromoApplied(false); setPromoError(""); }}
               placeholder="Введи промокод..."
               className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 transition-colors"
             />
             <button
               onClick={applyPromo}
-              className="btn-gradient text-white font-game px-6 py-3 rounded-xl relative overflow-hidden"
+              disabled={promoLoading || !promoCode}
+              className="btn-gradient text-white font-game px-6 py-3 rounded-xl relative overflow-hidden disabled:opacity-50"
             >
-              <span className="relative z-10">Применить</span>
+              <span className="relative z-10 flex items-center gap-2">
+                {promoLoading && <Icon name="Loader2" size={15} className="animate-spin" />}
+                Применить
+              </span>
             </button>
           </div>
           {promoApplied && (
             <div className="mt-3 flex items-center gap-2 text-green-400">
               <Icon name="CheckCircle" size={16} />
-              <span className="text-sm">Промокод применён! Скидка 20%</span>
+              <span className="text-sm">Промокод применён! Скидка {discount}%</span>
             </div>
           )}
           {promoError && (
             <div className="mt-3 flex items-center gap-2 text-red-400">
               <Icon name="XCircle" size={16} />
-              <span className="text-sm">Промокод не найден или истёк</span>
+              <span className="text-sm">{promoError}</span>
             </div>
           )}
         </div>
