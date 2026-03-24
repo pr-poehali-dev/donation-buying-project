@@ -1,42 +1,23 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
 
-const games = [
-  { id: "all", name: "Все игры", icon: "🎮" },
-  { id: "minecraft", name: "Minecraft", icon: "⛏️" },
-  { id: "fortnite", name: "Fortnite", icon: "🔫" },
-  { id: "roblox", name: "Roblox", icon: "🧱" },
-  { id: "genshin", name: "Genshin Impact", icon: "⚔️" },
-  { id: "cs2", name: "CS2", icon: "💣" },
-];
-
 const packages = [
-  { id: 1, game: "minecraft", name: "Стартовый", coins: 100, price: 99, bonus: 0, popular: false, isNew: true, color: "from-green-500 to-emerald-500", emoji: "⛏️" },
-  { id: 2, game: "minecraft", name: "Базовый", coins: 500, price: 399, bonus: 5, popular: false, isNew: false, color: "from-blue-500 to-cyan-500", emoji: "⛏️" },
-  { id: 3, game: "minecraft", name: "Продвинутый", coins: 1200, price: 799, bonus: 20, popular: true, isNew: false, color: "from-purple-500 to-violet-500", emoji: "⛏️" },
-  { id: 4, game: "minecraft", name: "Премиум", coins: 3000, price: 1799, bonus: 35, popular: false, isNew: false, color: "from-yellow-500 to-orange-500", emoji: "⛏️" },
-  { id: 5, game: "fortnite", name: "V-Bucks 1000", coins: 1000, price: 699, bonus: 0, popular: false, isNew: false, color: "from-blue-400 to-indigo-500", emoji: "🔫" },
-  { id: 6, game: "fortnite", name: "V-Bucks 2800", coins: 2800, price: 1799, bonus: 12, popular: true, isNew: false, color: "from-purple-400 to-blue-500", emoji: "🔫" },
-  { id: 7, game: "roblox", name: "Robux 400", coins: 400, price: 299, bonus: 0, popular: false, isNew: false, color: "from-red-500 to-orange-500", emoji: "🧱" },
-  { id: 8, game: "roblox", name: "Robux 1700", coins: 1700, price: 999, bonus: 15, popular: true, isNew: false, color: "from-pink-500 to-red-500", emoji: "🧱" },
-  { id: 9, game: "genshin", name: "Genesis Crystals 60", coins: 60, price: 99, bonus: 0, popular: false, isNew: true, color: "from-indigo-500 to-purple-500", emoji: "⚔️" },
-  { id: 10, game: "genshin", name: "Genesis Crystals 980", coins: 980, price: 1499, bonus: 10, popular: true, isNew: false, color: "from-violet-500 to-indigo-500", emoji: "⚔️" },
-  { id: 11, game: "cs2", name: "500 очков", coins: 500, price: 499, bonus: 0, popular: false, isNew: false, color: "from-orange-500 to-yellow-500", emoji: "💣" },
-  { id: 12, game: "cs2", name: "2000 очков", coins: 2000, price: 1699, bonus: 18, popular: true, isNew: false, color: "from-yellow-500 to-amber-500", emoji: "💣" },
+  { id: 1, name: "Legend Basic", price: 19, popular: false, isNew: false, color: "from-slate-500 to-gray-600", emoji: "⚔️", desc: "Начальный статус легенды" },
+  { id: 2, name: "Legend Gold", price: 199, popular: false, isNew: false, color: "from-yellow-500 to-amber-400", emoji: "🥇", desc: "Золотой статус для избранных" },
+  { id: 3, name: "Legend Platinum", price: 499, popular: true, isNew: false, color: "from-cyan-400 to-blue-500", emoji: "💠", desc: "Платиновый уровень престижа" },
+  { id: 4, name: "Legend Diamond", price: 999, popular: false, isNew: false, color: "from-purple-500 to-pink-500", emoji: "💎", desc: "Редкий алмазный статус" },
+  { id: 5, name: "Временный Админ", price: 4999, popular: false, isNew: true, color: "from-red-500 to-orange-500", emoji: "👑", desc: "Права администратора на сервере" },
 ];
 
 interface CatalogPageProps {
   onNavigate: (page: string) => void;
 }
 
-export default function CatalogPage({ onNavigate }: CatalogPageProps) {
-  const [selectedGame, setSelectedGame] = useState("all");
+export default function CatalogPage({ onNavigate: _onNavigate }: CatalogPageProps) {
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
   const [promoError, setPromoError] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
-
-  const filtered = selectedGame === "all" ? packages : packages.filter(p => p.game === selectedGame);
 
   const applyPromo = () => {
     if (promoCode.toUpperCase() === "WELCOME20" || promoCode.toUpperCase() === "SAVE10") {
@@ -54,40 +35,23 @@ export default function CatalogPage({ onNavigate }: CatalogPageProps) {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-16 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen pt-24 pb-32 px-4">
+      <div className="max-w-5xl mx-auto">
         <div className="mb-10">
           <h1 className="font-game text-4xl mb-2">
             КАТАЛОГ <span className="gradient-text">ДОНАТОВ</span>
           </h1>
-          <p className="text-gray-400">Выбери игру и пакет, который тебе нужен</p>
+          <p className="text-gray-400">Выбери пакет и получи статус мгновенно</p>
         </div>
 
-        <div className="flex flex-wrap gap-3 mb-8">
-          {games.map(g => (
-            <button
-              key={g.id}
-              onClick={() => setSelectedGame(g.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all ${
-                selectedGame === g.id
-                  ? "btn-gradient text-white glow-purple"
-                  : "card-glow text-gray-400 hover:text-white"
-              }`}
-            >
-              <span>{g.icon}</span>
-              {g.name}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10">
-          {filtered.map((pkg) => (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+          {packages.map((pkg) => (
             <div
               key={pkg.id}
               onClick={() => setSelectedPackage(pkg.id === selectedPackage ? null : pkg.id)}
-              className={`relative card-glow rounded-2xl p-5 cursor-pointer transition-all ${
+              className={`relative card-glow rounded-2xl p-6 cursor-pointer transition-all ${
                 selectedPackage === pkg.id ? "border-purple-400/60 shadow-lg shadow-purple-500/20" : ""
-              }`}
+              } ${pkg.name === "Временный Админ" ? "md:col-span-2 lg:col-span-1" : ""}`}
             >
               {pkg.popular && (
                 <div className="absolute -top-2 left-4 badge-popular px-3 py-0.5 rounded-full text-xs font-bold">
@@ -104,30 +68,25 @@ export default function CatalogPage({ onNavigate }: CatalogPageProps) {
                 {pkg.emoji}
               </div>
 
-              <h3 className="font-game text-white text-lg mb-1">{pkg.name}</h3>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-yellow-400 font-game text-xl">💎 {pkg.coins.toLocaleString()}</span>
-                {pkg.bonus > 0 && (
-                  <span className="badge-new px-2 py-0.5 rounded-full text-xs">+{pkg.bonus}%</span>
-                )}
-              </div>
+              <h3 className="font-game text-white text-xl mb-1">{pkg.name}</h3>
+              <p className="text-gray-500 text-sm mb-4">{pkg.desc}</p>
 
               <div className="flex items-center justify-between">
                 <div>
                   {promoApplied && (
-                    <span className="text-gray-500 line-through text-sm">{pkg.price} ₽</span>
+                    <span className="text-gray-500 line-through text-sm block">{pkg.price} ₽</span>
                   )}
-                  <span className="text-white font-game text-xl block">
+                  <span className="text-white font-game text-2xl">
                     {getPrice(pkg.price)} ₽
                   </span>
                 </div>
-                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
                   selectedPackage === pkg.id
                     ? "border-purple-400 bg-purple-400"
                     : "border-gray-600"
                 }`}>
                   {selectedPackage === pkg.id && (
-                    <Icon name="Check" size={12} className="text-white" />
+                    <Icon name="Check" size={14} className="text-white" />
                   )}
                 </div>
               </div>
@@ -185,7 +144,6 @@ export default function CatalogPage({ onNavigate }: CatalogPageProps) {
               <span className="text-sm">Промокод не найден или истёк</span>
             </div>
           )}
-          <p className="text-gray-600 text-xs mt-3">Попробуй: WELCOME20 или SAVE10</p>
         </div>
       </div>
     </div>
